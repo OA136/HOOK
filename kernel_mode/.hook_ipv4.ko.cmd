@@ -1,1 +1,0 @@
-cmd_/home/sq/hook_ipv4-master/kernel_mode/hook_ipv4.ko := ld -r -m elf_x86_64 -T ./scripts/module-common.lds --build-id  -o /home/sq/hook_ipv4-master/kernel_mode/hook_ipv4.ko /home/sq/hook_ipv4-master/kernel_mode/hook_ipv4.o /home/sq/hook_ipv4-master/kernel_mode/hook_ipv4.mod.o
