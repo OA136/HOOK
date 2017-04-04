@@ -1,0 +1,1 @@
+cmd_/home/sq/gradute/hook_ipv4-master/kernel_mode/hook_ipv4_fix.ko := ld -r -m elf_x86_64 -T ./scripts/module-common.lds --build-id  -o /home/sq/gradute/hook_ipv4-master/kernel_mode/hook_ipv4_fix.ko /home/sq/gradute/hook_ipv4-master/kernel_mode/hook_ipv4_fix.o /home/sq/gradute/hook_ipv4-master/kernel_mode/hook_ipv4_fix.mod.o

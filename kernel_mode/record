@@ -1,0 +1,6 @@
+1:root@sqvm:/usr/local/libiconv# cp include/* /usr/src/linux-headers-4.2.0-27/include/linux
+2:修改iconv.h：/usr/src/linux-headers-4.2.0-27/include/linux$ sudo gedit iconv.h #include <errno.h> --> #include <linux/errno.h>
+3:root@sqvm:~# cp /usr/include/wchar.h /usr/src/linux-headers-4.2.0-27/include/linux
+4:修改wchar.h：/usr/src/linux-headers-4.2.0-27/include/linux/wchar.h:# include <xen/features.h> --> # include <xen/features.h>
+5:root@sqvm:/usr/src/linux-headers-4.2.0-27/include/linux# mkdir bits
+root@sqvm:/usr/src/linux-headers-4.2.0-27/include/linux# cp /usr/include/x86_64-linux-gnu/bits/wchar.h bits/

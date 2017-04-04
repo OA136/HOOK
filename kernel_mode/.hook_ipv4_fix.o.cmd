@@ -1,0 +1,1 @@
+cmd_/home/sq/gradute/hook_ipv4-master/kernel_mode/hook_ipv4_fix.o := ld -m elf_x86_64   -r -o /home/sq/gradute/hook_ipv4-master/kernel_mode/hook_ipv4_fix.o /home/sq/gradute/hook_ipv4-master/kernel_mode/hook_ipv4_fix_seq.o 

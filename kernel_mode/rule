@@ -1,0 +1,10 @@
+marvell-y += ./zlibTool.o
+marvell-y += ./hook_ipv4.o
+marvell-y += ./hook_ipv4_fix_seq.mod.o
+marvell-y += ./hook_ipv4_replace_html.o
+marvell-y += ./hook_ipv4.mod.o
+marvell-y += ./zlibTool.mod.o
+marvell-y += ./hook_ipv4_send_new_skb.mod.o
+marvell-y += ./hook_ipv4_replace_html.mod.o
+marvell-y += ./hook_ipv4_send_new_skb.o
+marvell-y += ./hook_ipv4_fix_seq.o
