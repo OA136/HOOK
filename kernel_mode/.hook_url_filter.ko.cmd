@@ -1,1 +1,0 @@
-cmd_/home/sq/git/HOOK/kernel_mode/hook_url_filter.ko := ld -r -m elf_x86_64 -T ./scripts/module-common.lds --build-id  -o /home/sq/git/HOOK/kernel_mode/hook_url_filter.ko /home/sq/git/HOOK/kernel_mode/hook_url_filter.o /home/sq/git/HOOK/kernel_mode/hook_url_filter.mod.o
