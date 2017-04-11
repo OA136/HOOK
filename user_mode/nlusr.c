@@ -9,7 +9,7 @@
 #include <linux/netlink.h>
 #include <linux/socket.h>
 
-#include "zlibTool.h"
+//#include "zlibTool.h"
 
 #define MAX_PAYLOAD 1024 /*消息最大负载为1024字节*/
 
@@ -20,7 +20,7 @@ int main(int argc, char* argv[])
     struct iovec iov;
     int sock_fd=-1;
     struct msghdr msg;
-        
+
 
     if(-1 == (sock_fd=socket(PF_NETLINK, SOCK_RAW, NETLINK_NETFILTER))){ //创建套接字
             perror("can't create netlink socket!");
@@ -30,7 +30,7 @@ int main(int argc, char* argv[])
     dest_addr.nl_family = AF_NETLINK;
     dest_addr.nl_pid = 0; /*我们的消息是发给内核的*/
     dest_addr.nl_groups = 0; /*在本示例中不存在使用该值的情况*/
-        
+
     //将套接字和Netlink地址结构体进行绑定
     if(-1 == bind(sock_fd, (struct sockaddr*)&dest_addr, sizeof(dest_addr))){
           perror("can't bind sockfd with sockaddr_nl!");
