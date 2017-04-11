@@ -45,12 +45,12 @@ int main(int argc, char* argv[])
     memset(nlh,0,MAX_PAYLOAD);
     /* 填充Netlink消息头部 */
     nlh->nlmsg_len = NLMSG_SPACE(MAX_PAYLOAD);
-    nlh->nlmsg_pid = 0;
+    nlh->nlmsg_pid = getpid();
     nlh->nlmsg_type = NLMSG_NOOP; //指明我们的Netlink是消息负载是一条空消息
     nlh->nlmsg_flags = 0;
 
     char content[] = "hello";
-    /*设置Netlink的消息内容，来自我们命令行输入的第一个参数*/
+    /*设置Netlink的消息内容(跳过消息头部)，来自我们命令行输入的第一个参数*/
     strcpy(NLMSG_DATA(nlh), content);
 
     /*这个是模板，暂时不用纠结为什么要这样用。有时间详细讲解socket时再说*/
@@ -62,8 +62,8 @@ int main(int argc, char* argv[])
     msg.msg_iov = &iov;
     msg.msg_iovlen = 1;
 
-    sendmsg(sock_fd, &msg, 0); //通过Netlink socket向内核发送消息
-
+    int len = sendmsg(sock_fd, &msg, 0); //通过Netlink socket向内核发送消息
+    printf("%d\n", len);
     /* 关闭netlink套接字 */
     close(sock_fd);
     free(nlh);
