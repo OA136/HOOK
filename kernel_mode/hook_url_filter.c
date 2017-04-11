@@ -14,8 +14,6 @@ MODULE_AUTHOR("songboyu");
 MODULE_DESCRIPTION("filter url");
 MODULE_VERSION("1.0");
 
-
-
 // 发出请求时删除请求头中Accept-Encoding字段，防止收到gzip压缩包
 int delete_accept_encoding(char *pkg)
 {
