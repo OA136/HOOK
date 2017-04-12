@@ -3,7 +3,7 @@
 #include <linux/kernel.h>
 #include <linux/skbuff.h>
 #include <linux/string.h>
-#include < net/sock.h>
+#include <net/sock.h>
 #include <linux/netlink.h>
 
 MODULE_LICENSE("GPL");
@@ -15,17 +15,20 @@ MODULE_VERSION("1.0");
 struct sock *skd = NULL;
 
 void receive(struct sk_buff *skb) {
-    printk(KERN_ALERT "Kernel received message!\n");
+//    struct nlmsghdr *nlh;
+//    nlh = (struct nlmsghdr *)skb->data;
+//    printk(KERN_ALERT "Kernel received message:%s\n", (char *)NLMSG_DATA(nlh));
+    printk(KERN_ALERT "Kernel received message\n");
 }
 
 
 
-static int init(void) {
+static int init_mod(void) {
     struct netlink_kernel_cfg cfg = {
 
         .input = receive,
     };
-    skd = netlink_kernel_create(net, NETLINK_NETFILTER, &cfg);
+    skd = netlink_kernel_create(&init_net, NETLINK_NETFILTER, &cfg);
     if (!skd) {
         printk(KERN_ALERT "Error create sock!\n");
         return -1;
@@ -33,10 +36,10 @@ static int init(void) {
     return 0;
 }
 
-static int exit(void) {
+static int exit_mod(void) {
     printk("exit\n");
     return 0;
 }
 
-module_init(init);
-module_exit(exit);
+module_init(init_mod);
+module_exit(exit_mod);
