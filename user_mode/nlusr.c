@@ -63,6 +63,8 @@ int main(int argc, char* argv[])
     msg.msg_iovlen = 1;
 
     int len = sendmsg(sock_fd, &msg, 0); //通过Netlink socket向内核发送消息
+    if (len <= 0)
+        printf("send to kernel error!\n");
     printf("%d\n", len);
     /* 关闭netlink套接字 */
     close(sock_fd);

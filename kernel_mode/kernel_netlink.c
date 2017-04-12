@@ -15,15 +15,14 @@ MODULE_VERSION("1.0");
 struct sock *skd = NULL;
 
 void receive(struct sk_buff *skb) {
-//    struct nlmsghdr *nlh;
-//    nlh = (struct nlmsghdr *)skb->data;
-//    printk(KERN_ALERT "Kernel received message:%s\n", (char *)NLMSG_DATA(nlh));
-    printk(KERN_ALERT "Kernel received message\n");
+    struct nlmsghdr *nlh;
+    nlh = (struct nlmsghdr *)skb->data;
+    printk(KERN_ALERT "Kernel received message:%s\n", (char *)NLMSG_DATA(nlh));
 }
 
 
 
-static int init_mod(void) {
+static void init_mod(void) {
     struct netlink_kernel_cfg cfg = {
 
         .input = receive,
@@ -31,14 +30,11 @@ static int init_mod(void) {
     skd = netlink_kernel_create(&init_net, NETLINK_NETFILTER, &cfg);
     if (!skd) {
         printk(KERN_ALERT "Error create sock!\n");
-        return -1;
     }
-    return 0;
 }
 
-static int exit_mod(void) {
+static void exit_mod(void) {
     printk("exit\n");
-    return 0;
 }
 
 module_init(init_mod);
