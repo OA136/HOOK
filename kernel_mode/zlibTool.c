@@ -10,7 +10,6 @@ int deflateCompress(Byte *data, uLong ndata,
 {
     z_stream c_stream;
     int err = 0;
-
     if(data && ndata > 0)
     {
         // c_stream.zalloc = (alloc_func)0;

@@ -8,7 +8,7 @@
 #include <linux/if_packet.h>
 #include <linux/skbuff.h>
 #include <linux/string.h>
-#include "kernel_netlink.c"
+#include "kernel_netlink/self.h"
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("songboyu");
@@ -152,7 +152,7 @@ static int init_hook_module(void)
 {
 	nf_register_hooks(http_hooks, ARRAY_SIZE(http_hooks));
 	printk(KERN_ALERT "hook_url_filter: insmod\n");
-
+    send_to_user("yes");
 	return 0;
 }
 
