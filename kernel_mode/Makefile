@@ -1,4 +1,4 @@
-obj-m := kernel_netlink.o
+obj-m := hook_url_filter.o
 KDIR := /lib/modules/$(shell uname -r)/build
 PWD := $(shell pwd)
 

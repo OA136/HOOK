@@ -8,6 +8,7 @@
 #include <linux/if_packet.h>
 #include <linux/skbuff.h>
 #include <linux/string.h>
+#include "kernel_netlink.c"
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("songboyu");
