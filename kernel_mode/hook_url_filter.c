@@ -8,7 +8,8 @@
 #include <linux/if_packet.h>
 #include <linux/skbuff.h>
 #include <linux/string.h>
-#include "kernel_netlink/self.h"
+#include "kernel_netlink.h"
+#include "common.h"
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("songboyu");
@@ -84,56 +85,60 @@ unsigned int hook_func(unsigned int hooknum, struct sk_buff *skb, const struct n
 	// if (0 != skb_linearize(skb)) {
 	// 	return NF_ACCEPT;
 	// }
-	struct iphdr *iph = ip_hdr(skb);
+    //	控制变量
+    if (con_url == 0) {
 
-	unsigned int tot_len = ntohs(iph->tot_len);
-	unsigned int iph_len = ip_hdrlen(skb);
+        struct iphdr *iph = ip_hdr(skb);
 
-	unsigned int saddr = (unsigned int)iph->saddr;
-	unsigned int daddr = (unsigned int)iph->daddr;
+        unsigned int tot_len = ntohs(iph->tot_len);
+        unsigned int iph_len = ip_hdrlen(skb);
 
-	if (iph->protocol == IPPROTO_TCP)
-	{
-		// struct tcphdr *tcph = (void *)iph + iph->ihl * 4;
-		struct tcphdr *tcph = tcp_hdr(skb);
-		unsigned int tcplen = skb->len - (iph->ihl*4) - (tcph->doff*4);
+        unsigned int saddr = (unsigned int)iph->saddr;
+        unsigned int daddr = (unsigned int)iph->daddr;
 
-		unsigned int sport = (unsigned int)ntohs(tcph->source);
-		unsigned int dport = (unsigned int)ntohs(tcph->dest);
+        if (iph->protocol == IPPROTO_TCP)
+        {
+            // struct tcphdr *tcph = (void *)iph + iph->ihl * 4;
+            struct tcphdr *tcph = tcp_hdr(skb);
+            unsigned int tcplen = skb->len - (iph->ihl*4) - (tcph->doff*4);
 
-		char *pkg = (char *)((long long)tcph + ((tcph->doff) * 4));
+            unsigned int sport = (unsigned int)ntohs(tcph->source);
+            unsigned int dport = (unsigned int)ntohs(tcph->dest);
 
-		if(dport == 80)
-		{
-            char content[10] = "1234567";
-            send_to_user(content);
-            char *p, *url_start, *url_end, *url;
-            url_start = strstr(pkg, "Host: ");
-            if (url_start == NULL) return NF_ACCEPT;
-            url_end = strstr(url_start, "\r\n");
-            if (url_end == NULL) return NF_ACCEPT;
-            int url_len = url_end - (url_start + 6);
-            url =  (char *)kmalloc(sizeof(char)*(url_len + 1), GFP_ATOMIC);
-            strsub(url, url_start + 6, url_len);
+            char *pkg = (char *)((long long)tcph + ((tcph->doff) * 4));
 
-            printk(KERN_ALERT "%s\n", url);
-            if (strcmp(url, "www.dgqxjy.com") == 0)
-                return NF_DROP;
-            kfree(url);
-			// 只处理GET请求
-			if (memcmp(pkg,"GET",strlen("GET")) != 0)
-			{
-				return NF_ACCEPT;
-			}
+            if(dport == 80)
+            {
+                char content[30] = "Hello, I'm url_filter!";
+                send_to_user(content);
+                char *p, *url_start, *url_end, *url;
+                url_start = strstr(pkg, "Host: ");
+                if (url_start == NULL) return NF_ACCEPT;
+                url_end = strstr(url_start, "\r\n");
+                if (url_end == NULL) return NF_ACCEPT;
+                int url_len = url_end - (url_start + 6);
+                url =  (char *)kmalloc(sizeof(char)*(url_len + 1), GFP_ATOMIC);
+                strsub(url, url_start + 6, url_len);
 
-			p = strstr(pkg,"HTTP/1.1");
-			if(p == NULL) return NF_ACCEPT;
+                printk(KERN_ALERT "%s\n", url);
+                if (strcmp(url, "www.dgqxjy.com") == 0)
+                    return NF_DROP;
+                kfree(url);
+                // 只处理GET请求
+                if (memcmp(pkg,"GET",strlen("GET")) != 0)
+                {
+                    return NF_ACCEPT;
+                }
 
-			// 发出请求时删除请求头中Accept-Encoding字段，防止收到gzip压缩包
-			delete_accept_encoding(pkg);
-			fix_checksum(skb);
-		}
-	}
+                p = strstr(pkg,"HTTP/1.1");
+                if(p == NULL) return NF_ACCEPT;
+
+                // 发出请求时删除请求头中Accept-Encoding字段，防止收到gzip压缩包
+                delete_accept_encoding(pkg);
+                fix_checksum(skb);
+            }
+        }
+    }
 	return NF_ACCEPT;
 }
 
@@ -166,4 +171,3 @@ static void cleanup_hook_module(void)
 
 module_init(init_hook_module);
 module_exit(cleanup_hook_module);
-

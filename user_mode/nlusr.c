@@ -12,7 +12,7 @@
 //#include "zlibTool.h"
 
 #define MAX_PAYLOAD 1024 /*消息最大负载为1024字节*/
-
+#define CON_START 5
 struct sockaddr_nl src_addr, dest_addr;
 struct nlmsghdr *nlh = NULL;
 struct iovec iov;
@@ -27,7 +27,7 @@ int sendto_kernel(char *content) {
     /* 填充Netlink消息头部 */
     nlh->nlmsg_len = strlen(content) + NLMSG_HDRLEN;
     nlh->nlmsg_pid = getpid();
-    nlh->nlmsg_type = NLMSG_NOOP; //指明我们的Netlink是消息负载是一条空消息
+    nlh->nlmsg_type = CON_START; //指明我们的Netlink是消息负载是一条空消息
     nlh->nlmsg_flags = 0;
 
     /*这个是模板，暂时不用纠结为什么要这样用。有时间详细讲解socket时再说*/

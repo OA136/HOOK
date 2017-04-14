@@ -5,12 +5,15 @@
 #include <linux/string.h>
 #include <net/sock.h>
 #include <linux/netlink.h>
-#include "kernel_netlink/self.h"
+#include "common.h"
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("SQ");
 MODULE_DESCRIPTION("Communicate with user");
 MODULE_VERSION("1.0");
+
+//控制信息
+int con_url = 1;
 
 
 struct sock *skd = NULL;
@@ -50,6 +53,9 @@ static void receive_from_user(struct sk_buff *skb) {
 //    memset(msg, 0, 25);
 //    strncpy(msg, "hook_url_filter to user!", 24);
     //msg = "hook_url_filter to user!";
+    if (nlh->nlmsg_type == CON_START) {
+        con_url = 0;
+    }
     char msg[20] = "12345678901234567";
     send_to_user(msg);
 //    kfree(msg);
@@ -74,4 +80,6 @@ static void exit_mod(void) {
 
 module_init(init_mod);
 module_exit(exit_mod);
+
+EXPORT_SYMBOL(con_url);
 EXPORT_SYMBOL(send_to_user);
