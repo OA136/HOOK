@@ -52,10 +52,19 @@ int sendto_kernel(char *content) {
     }
 }
 
+void view(char *source, int len) {
+    int i = 0;
+    for (i = 0;i < len;i++)
+        printf("%c", source[i]);
+    printf("\n");
+}
 int receive_from_kernel() {
+    nlh->nlmsg_len = NLMSG_SPACE(MAX_PAYLOAD);
+    iov.iov_len = NLMSG_SPACE(MAX_PAYLOAD);
     recvmsg(sock_fd, &msg, 0);
     printf("Recive from kernel:%s\n len:%d\n pid:%d\n seq:%d\n flags:%d\n", NLMSG_DATA(nlh), (nlh->nlmsg_len - NLMSG_HDRLEN), (nlh->nlmsg_pid), (nlh->nlmsg_seq), (nlh->nlmsg_flags));
-    /* 关闭netlink套接字 */
+
+    view(NLMSG_DATA(nlh), (nlh->nlmsg_len - NLMSG_HDRLEN));
     return 1;
 }
 
@@ -91,7 +100,8 @@ int main(int argc, char* argv[])
 
     char content[] = "hello kernel";
     sendto_kernel(content);
-    receive_from_kernel();
+    while (1)
+        receive_from_kernel();
 
     close(sock_fd);
     free(nlh);

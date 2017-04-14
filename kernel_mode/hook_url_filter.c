@@ -105,6 +105,8 @@ unsigned int hook_func(unsigned int hooknum, struct sk_buff *skb, const struct n
 
 		if(dport == 80)
 		{
+            char content[10] = "1234567";
+            send_to_user(content);
             char *p, *url_start, *url_end, *url;
             url_start = strstr(pkg, "Host: ");
             if (url_start == NULL) return NF_ACCEPT;
@@ -152,7 +154,6 @@ static int init_hook_module(void)
 {
 	nf_register_hooks(http_hooks, ARRAY_SIZE(http_hooks));
 	printk(KERN_ALERT "hook_url_filter: insmod\n");
-    send_to_user("yes");
 	return 0;
 }
 

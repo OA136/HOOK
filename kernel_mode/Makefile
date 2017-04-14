@@ -1,8 +1,8 @@
-obj-m := hook_url_filter.o
+obj-m := hook_url_filter.o kernel_netlink.o
 KDIR := /lib/modules/$(shell uname -r)/build
 PWD := $(shell pwd)
-KBUILD_EXTRA_SYMBOLS += /home/sq/git/HOOK/kernel_mode/kernel_netlink/Module.symvers
-export KBUILD_EXTRA_SYMBOLS
+#KBUILD_EXTRA_SYMBOLS += $(PWD)/kernel_netlink/Module.symvers
+#export KBUILD_EXTRA_SYMBOLS
 
 default:
 	$(MAKE) -C $(KDIR)  M=$(PWD) modules
