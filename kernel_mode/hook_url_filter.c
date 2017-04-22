@@ -12,7 +12,7 @@
 #include "common.h"
 
 MODULE_LICENSE("GPL");
-MODULE_AUTHOR("songboyu");
+MODULE_AUTHOR("SQ");
 MODULE_DESCRIPTION("filter url");
 MODULE_VERSION("1.0");
 
