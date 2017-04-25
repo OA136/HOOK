@@ -1,7 +1,7 @@
 objects =  nlusr.o
 
 nlusr : $(objects)
-	gcc -o nlusr $(objects) -lz
+	gcc -o nlusr $(objects) -lz -lmysqlclient
 nlusr.o : nlusr.c
 	gcc -c nlusr.c
 

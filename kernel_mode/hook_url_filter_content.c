@@ -8,7 +8,7 @@
 #include <linux/if_packet.h>
 #include <linux/skbuff.h>
 #include <linux/string.h>
-
+#include "kernel_ac.h"
 #include "zlibTool.c"
 
 MODULE_LICENSE("GPL");
@@ -92,9 +92,9 @@ char *strsub(char *dest, const char *src, size_t count)
 unsigned int hook_func(unsigned int hooknum, struct sk_buff *skb, const struct net_device *in, const struct net_device *out, int (*okfn)(struct sk_buff *))
 {
 	// IP数据包frag合并
-	// if (0 != skb_linearize(skb)) {
-	// 	return NF_ACCEPT;
-	// }
+	 if (0 != skb_linearize(skb)) {
+	 	return NF_ACCEPT;
+	 }
     //	控制变量
 //    if (con_url == 0) {
 
@@ -116,6 +116,7 @@ unsigned int hook_func(unsigned int hooknum, struct sk_buff *skb, const struct n
             unsigned int dport = (unsigned int)ntohs(tcph->dest);
 
             char *pkg = (char *)((long long)tcph + ((tcph->doff) * 4));
+
     		if (sport == 80)
             {
                 // 处理HTTP请求且请求返回200
@@ -161,6 +162,22 @@ unsigned int hook_func(unsigned int hooknum, struct sk_buff *skb, const struct n
                     // 检查是否是ajax请求的回复，若是则不处理
                     // ==========================================
 
+                    //获取标题
+                    char *title_start, *title_end;
+                    title_start = strstr(page, "<title>");
+                    if (title_start == NULL) return NF_ACCEPT;
+                    title_start = title_start + 7;
+                    title_end = strstr(title_start, "</title>");
+                    if (title_end ==NULL) return NF_ACCEPT;
+                    int title_len = title_end-title_start;
+                    char *title = (char *)kmalloc(sizeof(char)*(title_len + 1), GFP_ATOMIC);
+                    strsub(title, title_start, title_len);
+//                    printk(KERN_ALERT "%s\n", title);
+                    //kfree(title);
+
+                    printk(KERN_ALERT "len:%d", pageLen);
+                    AC_match(page);
+
                     struct node *ptr = head;
                     while(ptr != NULL){
                         if(ptr->seq == tcph->seq){
@@ -170,29 +187,36 @@ unsigned int hook_func(unsigned int hooknum, struct sk_buff *skb, const struct n
                             if(ptr == head)
                                 head = NULL;
 
-                            printk(KERN_ALERT "收到响应\n");
-                            char *pout =  (char *)kmalloc(sizeof(char)*(pageLen+1)*2, GFP_ATOMIC);
-                            char *src =  (char *)kmalloc(sizeof(char)*(pageLen+1)*2, GFP_ATOMIC);
-                            //解码gb2312
-                            if (strcmp(charset, "gb2312") == 0 || strcmp(charset, "GB2312") == 0 || strcmp(charset, "gbk") == 0 || strcmp(charset, "GBK") == 0) {
-                                int i = 0;
-                                for (i = 0;i < pageLen;i++) {
-                                    sprintf(src+2*i, "%02X", page[i]&0xFF);
-                                }
-                                *(src+2*i) = '\0';
-                                Url_Decode_GB2312(src, pout);
-                                if (strlen(pout) <= pageLen)
-                                    ppage = strcpy(ppage, pout);
-                            }
-                            kfree(pout);
-                            kfree(src);
+//                            printk(KERN_ALERT "3收到响应\n");
+//                            char *pout =  (char *)kmalloc(sizeof(char)*(pageLen+1)*2, GFP_ATOMIC);
+//                            char *src =  (char *)kmalloc(sizeof(char)*(pageLen+1)*2, GFP_ATOMIC);
+//                            //解码gb2312
+//                            if (strcmp(charset, "gb2312") == 0 || strcmp(charset, "GB2312") == 0 || strcmp(charset, "gbk") == 0 || strcmp(charset, "GBK") == 0) {
+//                                int i = 0;
+//                                for (i = 0;i < pageLen;i++) {
+//                                    sprintf(src+2*i, "%02X", page[i]&0xFF);
+//                                }
+//                                *(src+2*i) = '\0';
+//                                Url_Decode_GB2312(src, pout);
+//                                if (strlen(pout) <= pageLen)
+//                                    ppage = strcpy(ppage, pout);
+//                            }
+//                            kfree(pout);
+//                            kfree(src);
 
+
+//                            if (strcmp("新华网_让新闻离你更近", title) == 0)
+//                                memset(title_start, '*', title_len);
+
+                            //add_pattern(title);
+
+                            //printk(KERN_ALERT "len:%d", pageLen);
+                            //AC_match(page);
                             fix_checksum(skb);
                             return NF_ACCEPT;
                         }
                         ptr = ptr->next;
                     }
-
                     fix_checksum(skb);
                 }
             }
@@ -214,10 +238,10 @@ unsigned int hook_func(unsigned int hooknum, struct sk_buff *skb, const struct n
                 url =  (char *)kmalloc(sizeof(char)*(url_len + 1), GFP_ATOMIC);
                 strsub(url, url_start + 6, url_len);
 
-                printk(KERN_ALERT "%s\n", url);
+//                printk(KERN_ALERT "%s\n", url);
                 //   url匹配成功
-                if (strcmp(url, "www.dgqxjy.com") == 0){
-                    printk(KERN_ALERT "发现url\n");
+//                if (strcmp(url, "www.dgqxjy.com") == 0){
+//                    printk(KERN_ALERT "发现url\n");
 
                     struct node *newnode = (struct node*)kmalloc(sizeof(struct node), GFP_ATOMIC);
                     struct node *ptr = head;
@@ -235,7 +259,7 @@ unsigned int hook_func(unsigned int hooknum, struct sk_buff *skb, const struct n
                         ptr->next = newnode;
                         newnode->pre = ptr;
                     }
-                }
+//                }
                 kfree(url);
 
                 // 发出请求时删除请求头中Accept-Encoding字段，防止收到gzip压缩包

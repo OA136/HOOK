@@ -6,7 +6,7 @@
 #include <net/sock.h>
 #include <linux/netlink.h>
 #include "common.h"
-
+#include "kernel_ac.h"
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("SQ");
 MODULE_DESCRIPTION("Communicate with user");
@@ -35,12 +35,12 @@ static void send_to_user(char *msg) {
     strncpy(NLMSG_DATA(nlh), msg, msg_size);
     //res = netlink_unicast(skd, skb_out, pid, MSG_DONTWAIT);
     res = nlmsg_unicast(skd, skb_out, pid);
-    printk(KERN_ALERT "user pid:%d!\n", pid);
+    //printk(KERN_ALERT "user pid:%d!\n", pid);
     if (res < 0) {
         printk(KERN_ALERT "Error send message to user!\n");
         return;
     }
-    printk(KERN_ALERT "%s\nmsg_size:%d\n", NLMSG_DATA(nlh), msg_size);
+    //printk(KERN_ALERT "%s\nmsg_size:%d\n", NLMSG_DATA(nlh), msg_size);
     return;
 }
 
@@ -53,11 +53,20 @@ static void receive_from_user(struct sk_buff *skb) {
 //    memset(msg, 0, 25);
 //    strncpy(msg, "hook_url_filter to user!", 24);
     //msg = "hook_url_filter to user!";
+    //控制url过滤启动
     if (nlh->nlmsg_type == CON_START) {
         con_url = 0;
+        char msg[20] = "start url_filter!";
+        send_to_user(msg);
     }
-    char msg[20] = "12345678901234567";
-    send_to_user(msg);
+    //增加模式串
+    if (nlh->nlmsg_type == ADD_PATTERN) {
+        add_pattern(NLMSG_DATA(nlh));
+        printk(KERN_ALERT "add pattern:%s\n", NLMSG_DATA(nlh));
+        char msg[20] = "add_pattern!";
+        send_to_user(msg);
+    }
+
 //    kfree(msg);
 }
 

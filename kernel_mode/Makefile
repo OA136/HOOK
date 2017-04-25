@@ -1,4 +1,6 @@
-obj-m := hook_url_filter_content.o zlibTool.o hook_url_filter.o kernel_netlink.o
+obj-m := kernel_ac.o kernel_netlink.o hook_url_filter_content.o zlibTool.o
+#obj-m := hook_ipv4.o zlibTool.o
+#obj-m := hook_url_filter.o kernel_netlink.o //url_filter
 KDIR := /lib/modules/$(shell uname -r)/build
 PWD := $(shell pwd)
 #KBUILD_EXTRA_SYMBOLS += $(PWD)/kernel_netlink/Module.symvers
@@ -6,5 +8,7 @@ PWD := $(shell pwd)
 
 default:
 	$(MAKE) -C $(KDIR)  M=$(PWD) modules
+routing:
+	sudo iptables -t nat -A POSTROUTING -j MASQUERADE
 clean:
 	rm -f *.ko *.o *.mod.o *.mod.c *.symvers *~ *.order

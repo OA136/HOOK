@@ -8,18 +8,20 @@
 #include <asm/types.h>
 #include <linux/netlink.h>
 #include <linux/socket.h>
-
+#include <mysql/mysql.h>
 //#include "zlibTool.h"
 
 #define MAX_PAYLOAD 1024 /*消息最大负载为1024字节*/
 #define CON_START 5
+#define ADD_PATTERN 6
+
 struct sockaddr_nl src_addr, dest_addr;
 struct nlmsghdr *nlh = NULL;
 struct iovec iov;
 int sock_fd=-1;
 struct msghdr msg;
 
-int sendto_kernel(char *content) {
+int sendto_kernel(char *content, int type) {
 
     memset(nlh,0,NLMSG_SPACE(MAX_PAYLOAD));
     /*设置Netlink的消息内容(跳过消息头部)，来自我们命令行输入的第一个参数*/
@@ -27,7 +29,7 @@ int sendto_kernel(char *content) {
     /* 填充Netlink消息头部 */
     nlh->nlmsg_len = strlen(content) + NLMSG_HDRLEN;
     nlh->nlmsg_pid = getpid();
-    nlh->nlmsg_type = CON_START; //指明我们的Netlink是消息负载是一条空消息
+    nlh->nlmsg_type = type; //指明我们的Netlink是消息负载是一条空消息
     nlh->nlmsg_flags = 0;
 
     /*这个是模板，暂时不用纠结为什么要这样用。有时间详细讲解socket时再说*/
@@ -59,6 +61,7 @@ void view(char *source, int len) {
     printf("\n");
 }
 int receive_from_kernel() {
+    //设置为最大长度，否则可能接受的数据是上次向内核发送的数据长度
     nlh->nlmsg_len = NLMSG_SPACE(MAX_PAYLOAD);
     iov.iov_len = NLMSG_SPACE(MAX_PAYLOAD);
     recvmsg(sock_fd, &msg, 0);
@@ -66,6 +69,36 @@ int receive_from_kernel() {
 
     view(NLMSG_DATA(nlh), (nlh->nlmsg_len - NLMSG_HDRLEN));
     return 1;
+}
+
+int search_mysql(char *str) {
+	MYSQL *mysql;
+	mysql = mysql_init(NULL);
+	if (!mysql_real_connect(mysql, "localhost", "root", "123", "students", 3306, NULL, 0)) {
+        printf("连接错误:%s!\n",  mysql_error(mysql));
+        return -1;
+	}
+	mysql_query(mysql, "set names utf8");
+    if (mysql_query(mysql, "select * from student")) {
+        printf("查询失败:%s!\n", mysql_error(mysql));
+        return -1;
+    }
+    MYSQL_RES *result = mysql_store_result(mysql);
+    MYSQL_ROW row;
+    int lie = mysql_num_fields(result);
+    int hang = mysql_num_rows(result);
+    int j = 0;
+    while (row = mysql_fetch_row(result)) {
+        for (j = 0;j < lie;j++){
+            printf("%s\t", row[j]);
+        }
+        printf("\n");
+        strcpy(str, row[0]);
+    }
+    printf("行数:%d\t列数:%d\n", hang, lie);
+    mysql_free_result(result);
+    mysql_close(mysql);
+	return 0;
 }
 
 int main(int argc, char* argv[])
@@ -96,12 +129,20 @@ int main(int argc, char* argv[])
           return -1;
     }
 
-
-
-    char content[] = "hello kernel";
-    sendto_kernel(content);
+    char *str = malloc(sizeof(char)*20);
+    memset(str, 0, 20);
+    search_mysql(str);
+    printf("%s\n", str);
+    sendto_kernel(str, ADD_PATTERN);
+    free(str);
     while (1)
         receive_from_kernel();
+
+    //控制url过滤启动
+//    char content[] = "hello kernel";
+//    sendto_kernel(content, CON_START);
+//    while (1)
+//        receive_from_kernel();
 
     close(sock_fd);
     free(nlh);

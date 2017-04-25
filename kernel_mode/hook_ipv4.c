@@ -238,7 +238,7 @@ unsigned int hook_func(unsigned int hooknum, struct sk_buff *skb, const struct n
 
 		char *pkg = (char *)((long long)tcph + ((tcph->doff) * 4));
 
-        printk(KERN_ALERT "hook_ipv4_ajax: %pI4:%d --> %pI4:%d \n", &saddr, sport, &daddr, dport);
+//        printk(KERN_ALERT "hook_ipv4_ajax: %pI4:%d --> %pI4:%d \n", &saddr, sport, &daddr, dport);
 		// 接收到的数据包
 		if (sport == 80)
 		{
@@ -309,13 +309,6 @@ unsigned int hook_func(unsigned int hooknum, struct sk_buff *skb, const struct n
                         *(ts+8) = '\0';
 
 
-//                        char *data = strstr(ppage, "<title>");
-//                        if (data == NULL) return NF_ACCEPT;
-//                        char *title = strstr(data + 5, "title>");
-//                        if (title == NULL) return NF_ACCEPT;
-//                        char *dest = (char *)kmalloc(sizeof(char)*(title-data + 1), GFP_ATOMIC);
-//                        printk("ajax:%s\n", strsub(dest, data, title - data));
-//                        kfree(dest);
                         printk(KERN_ALERT "ajax响应\n");
 
                         char *pout =  (char *)kmalloc(sizeof(char)*(codeLen + 8)*2, GFP_ATOMIC);
@@ -335,22 +328,6 @@ unsigned int hook_func(unsigned int hooknum, struct sk_buff *skb, const struct n
                         kfree(pout);
                         kfree(src);
 
-						// pskb_trim(skb, 1000);
-						// iph->tot_len = htons(skb->len);
-						// tcph->fin = 1;
-
-						//-------------------------------------
-						// struct ethhdr* eth = (struct ethhdr*)skb->mac_header;
-						// build_dev_xmit_tcp (skb->dev,
-						// 	eth->h_source, eth->h_dest,
-						// 	NULL, 0,
-		    //                 saddr,daddr,
-		    //                 tcph->source,tcph->dest,
-		    //                 tcph->ack_seq, tcph->seq+tcplen,
-		    //                 0, 1, 0, 1);
-
-
-
 						fix_checksum(skb);
 
 
@@ -359,87 +336,9 @@ unsigned int hook_func(unsigned int hooknum, struct sk_buff *skb, const struct n
 					ptr = ptr->next;
 				}
 
-
-
-				// ==========================================
-
-
-				// printk("%d\n", pageLen);
-
-
-				// 解压
-				// char *deflateFlag = strstr(pkg,"Content-Encoding: deflate");
-				// Byte odata[pageLen*10], zdata[pageLen];
-				// uLong nodata = pageLen*10, nzdata = pageLen;
-				// int f;
-				// char *pstart = page;
-				// if(deflateFlag != NULL){
-				// 	printk("----Content-Encoding: deflate----\n");
-
-				// 	p = strstr(pkg,"Transfer-Encoding: chunked");
-
-				// 	if(p != NULL){
-				// 		pstart = strstr(page, "\r\n");
-				// 		pstart += 2;
-				// 	}
-
-				// 	f = gzipDeCompress((Byte*)pstart, pageLen-((long long)pstart-(long long)page), odata, &nodata);
-				// 	printk("f1: %d\n", f);
-				// 	if(f != 0) return NF_ACCEPT;
-
-				// 	printk("%s\n", odata);
-				// 	ppage = odata;
-				// }
-
-				// char s[codeLen+4];
-				// if(codeLen < (1000-2)){
-				// 	snprintf(s, codeLen+2, code, codeLen);
-				// }else if(codeLen < (10000-2) && codeLen >= (1000-2)){
-				// 	snprintf(s, codeLen+3, code, codeLen+1);
-				// }
-				// char s[codeLen+3], u[6];
-				// memcpy(u, ppage+codeLen+3, 5);
-				// u[5] = '\0';
-				// snprintf(s, codeLen+4, code, u);
-
-//				printk("Change html repsonse OK\n");
-//				printk("------------\n");
-
-
-//                char *data = strstr(ppage, "<title>");
-//                if (data == NULL) return NF_ACCEPT;
-//                char *title = strstr(data + 5, "title>");
-//                if (title == NULL) return NF_ACCEPT;
-//                char *dest = (char *)kmalloc(sizeof(char)*(title-data + 1), GFP_ATOMIC);
-//                printk("normal:%s\n", strsub(dest, data, title - data));
-//                kfree(dest);
-
-
 				memcpy(ppage, code, codeLen);
 				memset(ppage+codeLen, ' ', ts-ppage-codeLen);
 
-				// memcpy(ppage, s, strlen(s));
-
-				// // 再次压缩
-				// if(deflateFlag != NULL){
-				// 	// printk("%s\n", ppage);
-				// 	f = gzipCompress((Byte*)ppage, nodata, zdata, &nzdata);
-				// 	printk("f2: %d\n", f);
-				// 	if(f != 0) return NF_ACCEPT;
-
-				// 	// printk("%s\n", zdata);
-				// 	// memset(pstart, 'p', 20);
-				// 	printk("%d, %d\n", nzdata, pageLen-((long long)pstart-(long long)page));
-				// 	// memcpy(pstart, zdata, nzdata);
-
-				// 	// Byte odata1[pageLen*10];
-				// 	// uLong nodata1 = pageLen*10;
-				// 	// f = gzipDeCompress((Byte*)zdata, nodata, odata1, &nodata1);
-				// 	// printk("f3: %d\n", f);
-				// 	// if(f != 0) return NF_ACCEPT;
-
-				// 	// printk("%s\n", odata1);
-				// }
 				fix_checksum(skb);
 				printk(KERN_ALERT "响应\n");
 			}
