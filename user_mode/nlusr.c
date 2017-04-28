@@ -90,12 +90,12 @@ int search_mysql(char *str) {
     int j = 0;
     while (row = mysql_fetch_row(result)) {
         for (j = 0;j < lie;j++){
-            printf("%s\t", row[j]);
+            //printf("%s\t", row[j]);
         }
-        printf("\n");
+        //printf("\n");
         strcpy(str, row[0]);
     }
-    printf("行数:%d\t列数:%d\n", hang, lie);
+    //printf("行数:%d\t列数:%d\n", hang, lie);
     mysql_free_result(result);
     mysql_close(mysql);
 	return 0;
@@ -129,17 +129,18 @@ int main(int argc, char* argv[])
           return -1;
     }
 
+ //添加模式串
     char *str = malloc(sizeof(char)*20);
     memset(str, 0, 20);
     search_mysql(str);
-    printf("%s\n", str);
+    //printf("%s\n", str);
     sendto_kernel(str, ADD_PATTERN);
     free(str);
     while (1)
         receive_from_kernel();
 
     //控制url过滤启动
-//    char content[] = "hello kernel";
+//    char content[] = "hello kernel,i'm user";
 //    sendto_kernel(content, CON_START);
 //    while (1)
 //        receive_from_kernel();

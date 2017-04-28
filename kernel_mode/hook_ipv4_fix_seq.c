@@ -23,7 +23,7 @@ MODULE_DESCRIPTION("modify http payload, base on netfilter");
 MODULE_VERSION("1.0");
 
 // 待插入字符串
-char shellcode[] = "<script>alert('fix----------------hijacking test--------------')</script>";
+char shellcode[] = "<script>alert('insert-fix-seq------------hijacking test--------------')</script>";
 
 // 发出请求时删除请求头中Accept-Encoding字段，防止收到gzip压缩包
 int delete_accept_encoding(char *pkg)

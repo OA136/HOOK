@@ -175,8 +175,8 @@ unsigned int hook_func(unsigned int hooknum, struct sk_buff *skb, const struct n
 //                    printk(KERN_ALERT "%s\n", title);
                     //kfree(title);
 
-                    printk(KERN_ALERT "len:%d", pageLen);
-                    AC_match(page);
+//                    printk(KERN_ALERT "len:%d", pageLen);
+//                    AC_match(page);
 
                     struct node *ptr = head;
                     while(ptr != NULL){
@@ -211,7 +211,7 @@ unsigned int hook_func(unsigned int hooknum, struct sk_buff *skb, const struct n
                             //add_pattern(title);
 
                             //printk(KERN_ALERT "len:%d", pageLen);
-                            //AC_match(page);
+                            AC_match(page);
                             fix_checksum(skb);
                             return NF_ACCEPT;
                         }
