@@ -1,0 +1,13 @@
+.gitignore~
+*.ko
+*.mod.c
+*.mod.o
+*.o
+*.order
+*.cmd
+.tmp_versions
+modules.order
+Module.symvers
+*.mod
+*.*~
+*~
