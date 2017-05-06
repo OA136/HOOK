@@ -18,21 +18,23 @@ int con_url = 1;
 
 struct sock *skd = NULL;
 int pid;
-struct sk_buff *skb_out;
+//struct sk_buff *skb_out;
 
 static void send_to_user(char *msg) {
     struct nlmsghdr *nlh;
     int msg_size = strlen(msg);
     int res;
-    skb_out = nlmsg_new(msg_size, 0);
+    struct sk_buff *skb_out = nlmsg_new(msg_size, 0);
     if (!skb_out) {
         printk(KERN_ALERT "Failed to allocate new skb!\n");
         return;
     }
     //__nlmsg_put(struct sk_buff *skb, u32 portid, u32 seq, int type, int len, int flags);
     nlh = nlmsg_put(skb_out, 0, 0, 60, msg_size, 0);
+    printk(KERN_ALERT "msg_size:%d\t%d\n", msg_size, nlh->nlmsg_len-NLMSG_HDRLEN);
     NETLINK_CB(skb_out).dst_group = 0;
-    strncpy(NLMSG_DATA(nlh), msg, msg_size);
+
+    strncpy(nlmsg_data(nlh), msg, msg_size);
     //res = netlink_unicast(skd, skb_out, pid, MSG_DONTWAIT);
     res = nlmsg_unicast(skd, skb_out, pid);
     //printk(KERN_ALERT "user pid:%d!\n", pid);
@@ -48,7 +50,7 @@ static void receive_from_user(struct sk_buff *skb) {
     struct nlmsghdr *nlh;
     nlh = (struct nlmsghdr *)skb->data;
     pid = nlh->nlmsg_pid;
-    printk(KERN_ALERT "Kernel received message:%s\tlength:%d\n", (char *)NLMSG_DATA(nlh), nlh->nlmsg_len - NLMSG_HDRLEN);
+    printk(KERN_ALERT "Kernel received message:%s\tlength:%d\n", nlmsg_data(nlh), strlen(nlmsg_data(nlh)));
 //    char *msg = (char *)kmalloc(sizeof(char)*(25), GFP_ATOMIC);
 //    memset(msg, 0, 25);
 //    strncpy(msg, "hook_url_filter to user!", 24);
@@ -61,8 +63,8 @@ static void receive_from_user(struct sk_buff *skb) {
     }
     //增加模式串
     if (nlh->nlmsg_type == ADD_PATTERN) {
-        add_pattern(NLMSG_DATA(nlh));
-        printk(KERN_ALERT "add pattern:%s\n", NLMSG_DATA(nlh));
+        printk(KERN_ALERT "add pattern:%s\n", nlmsg_data(nlh));
+        add_pattern(nlmsg_data(nlh));
         char msg[20] = "add_pattern!";
         send_to_user(msg);
     }
@@ -71,7 +73,7 @@ static void receive_from_user(struct sk_buff *skb) {
 }
 
 
-static void init_mod(void) {
+static int init_mod(void) {
     struct netlink_kernel_cfg cfg = {
 
         .input = receive_from_user,
@@ -80,6 +82,7 @@ static void init_mod(void) {
     if (!skd) {
         printk(KERN_ALERT "Error create sock!\n");
     }
+    return 0;
 }
 
 static void exit_mod(void) {

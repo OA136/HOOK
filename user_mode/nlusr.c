@@ -11,7 +11,7 @@
 #include <mysql/mysql.h>
 //#include "zlibTool.h"
 
-#define MAX_PAYLOAD 1024 /*消息最大负载为1024字节*/
+#define MAX_PAYLOAD 409600 /*消息最大负载为1024字节*/
 #define CON_START 5
 #define ADD_PATTERN 6
 
@@ -22,16 +22,23 @@ int sock_fd=-1;
 struct msghdr msg;
 
 int sendto_kernel(char *content, int type) {
+    int con_len = strlen(content);
+    memset(nlh, 0, NLMSG_SPACE(MAX_PAYLOAD));
 
-    memset(nlh,0,NLMSG_SPACE(MAX_PAYLOAD));
-    /*设置Netlink的消息内容(跳过消息头部)，来自我们命令行输入的第一个参数*/
-    strcpy(NLMSG_DATA(nlh), content);
+
+
     /* 填充Netlink消息头部 */
-    nlh->nlmsg_len = strlen(content) + NLMSG_HDRLEN;
+    nlh->nlmsg_len = con_len + NLMSG_HDRLEN;
+    //nlh->nlmsg_len = NLMSG_SPACE(strlen(content));
     nlh->nlmsg_pid = getpid();
     nlh->nlmsg_type = type; //指明我们的Netlink是消息负载是一条空消息
     nlh->nlmsg_flags = 0;
 
+    /*设置Netlink的消息内容(跳过消息头部)，来自我们命令行输入的第一个参数*/
+    //strcpy(NLMSG_DATA(nlh), content);
+    strncpy(NLMSG_DATA(nlh), content, con_len);
+    memset(NLMSG_DATA(nlh) + con_len, '\0', 1);
+    printf("nlh:%s %d\n", NLMSG_DATA(nlh), strlen(NLMSG_DATA(nlh)));
     /*这个是模板，暂时不用纠结为什么要这样用。有时间详细讲解socket时再说*/
     memset(&iov, 0, sizeof(iov));
     iov.iov_base = (void *)nlh;
@@ -54,20 +61,21 @@ int sendto_kernel(char *content, int type) {
     }
 }
 
-void view(char *source, int len) {
-    int i = 0;
-    for (i = 0;i < len;i++)
-        printf("%c", source[i]);
-    printf("\n");
-}
+
 int receive_from_kernel() {
     //设置为最大长度，否则可能接受的数据是上次向内核发送的数据长度
     nlh->nlmsg_len = NLMSG_SPACE(MAX_PAYLOAD);
     iov.iov_len = NLMSG_SPACE(MAX_PAYLOAD);
+    memset(NLMSG_DATA(nlh), 0, NLMSG_SPACE(MAX_PAYLOAD));
     recvmsg(sock_fd, &msg, 0);
-    printf("Recive from kernel:%s\n len:%d\n pid:%d\n seq:%d\n flags:%d\n", NLMSG_DATA(nlh), (nlh->nlmsg_len - NLMSG_HDRLEN), (nlh->nlmsg_pid), (nlh->nlmsg_seq), (nlh->nlmsg_flags));
 
-    view(NLMSG_DATA(nlh), (nlh->nlmsg_len - NLMSG_HDRLEN));
+    struct nlmsghdr *nh = nlh;
+//    printf("Recive from kernel:%s\n len:%d\n pid:%d\n seq:%d\n flags:%d\n", NLMSG_DATA(nlh), (nlh->nlmsg_len - NLMSG_HDRLEN), (nlh->nlmsg_pid), (nlh->nlmsg_seq), (nlh->nlmsg_flags));
+    //for (; NLMSG_OK (nh, nh->nlmsg_len);nh = NLMSG_NEXT (nh, nh->nlmsg_len)) {
+    /* The end of multipart message. */
+        printf("len:%d\n%s\n", nlh->nlmsg_len - NLMSG_HDRLEN, NLMSG_DATA(nlh));
+    //}
+
     return 1;
 }
 
@@ -93,7 +101,10 @@ int search_mysql(char *str) {
             //printf("%s\t", row[j]);
         }
         //printf("\n");
-        strcpy(str, row[0]);
+        printf("row[0]:%s\n", row[0]);
+        strncpy(str, row[0], strlen(row[0]));
+        str[strlen(row[0])] = '\0';
+        printf("str:%s\n", str);
     }
     //printf("行数:%d\t列数:%d\n", hang, lie);
     mysql_free_result(result);
@@ -133,7 +144,7 @@ int main(int argc, char* argv[])
     char *str = malloc(sizeof(char)*20);
     memset(str, 0, 20);
     search_mysql(str);
-    //printf("%s\n", str);
+    printf("%s\n", str);
     sendto_kernel(str, ADD_PATTERN);
     free(str);
     while (1)

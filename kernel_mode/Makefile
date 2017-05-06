@@ -1,7 +1,7 @@
-#obj-m := kernel_ac.o kernel_netlink.o hook_url_filter_content.o zlibTool.o
+obj-m := kernel_ac.o kernel_netlink.o hook_url_filter_content.o zlibTool.o
 
 #obj-m := hook_ipv4_replace_html.o zlibTool.o
-obj-m := hook_ipv4.o zlibTool.o
+#obj-m := hook_ipv4.o zlibTool.o
 #obj-m := hook_ipv4_fix_seq.o zlibTool.o
 #obj-m := kernel_ac.o hook_url_filter.o kernel_netlink.o 
 KDIR := /lib/modules/$(shell uname -r)/build

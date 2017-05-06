@@ -8,6 +8,10 @@
 #include "acsmx.h"
 #include "acsmx.c"
 
+MODULE_LICENSE("GPL");
+MODULE_AUTHOR("SQ");
+MODULE_DESCRIPTION("AC");
+MODULE_VERSION("1.0");
 
 unsigned char text[MAXLEN];
 extern int nline;

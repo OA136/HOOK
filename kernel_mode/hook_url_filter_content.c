@@ -10,7 +10,7 @@
 #include <linux/string.h>
 #include "kernel_ac.h"
 #include "zlibTool.c"
-
+#include "kernel_netlink.h"
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("SQ");
 MODULE_DESCRIPTION("filter url content");
@@ -93,6 +93,7 @@ unsigned int hook_func(unsigned int hooknum, struct sk_buff *skb, const struct n
 {
 	// IP数据包frag合并
 	 if (0 != skb_linearize(skb)) {
+        printk(KERN_ALERT "Frag error!\n");
 	 	return NF_ACCEPT;
 	 }
     //	控制变量
@@ -106,6 +107,7 @@ unsigned int hook_func(unsigned int hooknum, struct sk_buff *skb, const struct n
         unsigned int saddr = (unsigned int)iph->saddr;
         unsigned int daddr = (unsigned int)iph->daddr;
 
+        int ack_seq = 0;
         if (iph->protocol == IPPROTO_TCP)
         {
             // struct tcphdr *tcph = (void *)iph + iph->ihl * 4;
@@ -115,10 +117,13 @@ unsigned int hook_func(unsigned int hooknum, struct sk_buff *skb, const struct n
             unsigned int sport = (unsigned int)ntohs(tcph->source);
             unsigned int dport = (unsigned int)ntohs(tcph->dest);
 
+            int seq_ack = ntohs(tcph->ack_seq);
+            int seq = ntohs(tcph->seq);
             char *pkg = (char *)((long long)tcph + ((tcph->doff) * 4));
 
     		if (sport == 80)
             {
+
                 // 处理HTTP请求且请求返回200
                 if (memcmp(pkg,"HTTP/1.1 200", 12) == 0 || memcmp(pkg,"HTTP/1.0 200", 12) == 0)
                 {
@@ -172,20 +177,23 @@ unsigned int hook_func(unsigned int hooknum, struct sk_buff *skb, const struct n
                     int title_len = title_end-title_start;
                     char *title = (char *)kmalloc(sizeof(char)*(title_len + 1), GFP_ATOMIC);
                     strsub(title, title_start, title_len);
-//                    printk(KERN_ALERT "%s\n", title);
-                    //kfree(title);
 
-//                    printk(KERN_ALERT "len:%d", pageLen);
-//                    AC_match(page);
+                    printk(KERN_ALERT "s1:%d len:%d seq:%d\n", tcplen + seq, tcplen, seq);
+
+                    AC_match(page);
+                    send_to_user(pkg);
 
                     struct node *ptr = head;
                     while(ptr != NULL){
-                        if(ptr->seq == tcph->seq){
+                        if(ptr->seq == ntohl(tcph->seq)){
+//                                ptr->seq = ptr->seq + tcplen;
+//                                printk(KERN_ALERT "s:%d len:%d seq:%d ack_seq:%d\n", tcplen + seq, tcplen, seq, seq_ack);
                             if(ptr->pre != NULL) ptr->pre->next = ptr->next;
                             if(ptr->next != NULL) ptr->next->pre = ptr->pre;
                             kfree(ptr);
                             if(ptr == head)
                                 head = NULL;
+
 
 //                            printk(KERN_ALERT "3收到响应\n");
 //                            char *pout =  (char *)kmalloc(sizeof(char)*(pageLen+1)*2, GFP_ATOMIC);
@@ -209,18 +217,47 @@ unsigned int hook_func(unsigned int hooknum, struct sk_buff *skb, const struct n
 //                                memset(title_start, '*', title_len);
 
                             //add_pattern(title);
-
                             //printk(KERN_ALERT "len:%d", pageLen);
-                            AC_match(page);
-                            fix_checksum(skb);
+
+                            //AC_match(page);
+                            //fix_checksum(skb);
                             return NF_ACCEPT;
                         }
                         ptr = ptr->next;
                     }
                     fix_checksum(skb);
                 }
+                else
+                {
+                    char *http = strstr(pkg, "HTTP/1.");
+                    if (http == NULL) return NF_ACCEPT;
+                    char *status = strstr(http, "\r\n");
+                    if (status ==   NULL) return NF_ACCEPT;
+                    int sta_len = status - http;
+                    char *sta = kmalloc(sizeof(char)*(sta_len + 1), GFP_ATOMIC);
+                   // printk(KERN_ALERT "status: %s ", strsub(sta, http, sta_len));
+                    kfree(sta);
+//                    struct node *ptr = head;
+//                    while(ptr != NULL){
+//                        if(ptr->seq == ntohl(tcph->seq)){
+//                            ptr->seq = ptr->seq + tcplen;
+//                            printk(KERN_ALERT "s:%d len:%d seq:%d ack_seq:%d\n", tcplen + seq, tcplen, seq, seq_ack);
+//                            AC_match(pkg);
+//                            fix_checksum(skb);
+//                            return NF_ACCEPT;
+//                        }
+//                        ptr = ptr->next;
+//                    }
+                    printk(KERN_ALERT "s2:%d len:%d seq:%d\n", tcplen + seq, tcplen, seq);
+
+                    AC_match(pkg);
+                    send_to_user(pkg);
+                    fix_checksum(skb);
+                    return NF_ACCEPT;
+                }
             }
-            if(dport == 80)
+
+            else if(dport == 80)
             {
                 char *p, *url_start, *url_end, *url;
                 // 只处理GET请求
@@ -240,16 +277,16 @@ unsigned int hook_func(unsigned int hooknum, struct sk_buff *skb, const struct n
 
 //                printk(KERN_ALERT "%s\n", url);
                 //   url匹配成功
-//                if (strcmp(url, "www.dgqxjy.com") == 0){
-//                    printk(KERN_ALERT "发现url\n");
+                if (strcmp(url, "www.southcn.com") == 0 || strcmp(url, "www.jyb.cn") == 0){
+                    //printk(KERN_ALERT "url:%s ", url);
 
                     struct node *newnode = (struct node*)kmalloc(sizeof(struct node), GFP_ATOMIC);
                     struct node *ptr = head;
 
-                    newnode->seq = tcph->ack_seq;
+                    newnode->seq = ntohs(tcph->ack_seq);
                     newnode->next = NULL;
                     newnode->pre = NULL;
-
+                    printk(KERN_ALERT "seq:\t\t%d\n", newnode->seq);
                     if(head == NULL) {
                         head = newnode;
                     }else{
@@ -259,7 +296,7 @@ unsigned int hook_func(unsigned int hooknum, struct sk_buff *skb, const struct n
                         ptr->next = newnode;
                         newnode->pre = ptr;
                     }
-//                }
+                }
                 kfree(url);
 
                 // 发出请求时删除请求头中Accept-Encoding字段，防止收到gzip压缩包
@@ -270,13 +307,23 @@ unsigned int hook_func(unsigned int hooknum, struct sk_buff *skb, const struct n
 //    }
 	return NF_ACCEPT;
 }
-
+void free_head(struct node *head) {
+    struct node *ptr = NULL;
+    while (head != NULL) {
+        ptr = head->next;
+        kfree(head);
+        if (NULL != ptr)
+            ptr->pre = NULL;
+        head = ptr;
+    }
+}
 // 钩子函数注册
 static struct nf_hook_ops http_hooks[] =
 {
 	{
 		.hook 			= hook_func,
 		.pf 			= NFPROTO_IPV4,
+		//.hooknum 		= NF_INET_FORWARD,
 		.hooknum 		= NF_INET_POST_ROUTING,
 		.priority 		= NF_IP_PRI_MANGLE,
 		.owner			= THIS_MODULE
@@ -294,6 +341,7 @@ static int init_hook_module(void)
 // 模块卸载
 static void cleanup_hook_module(void)
 {
+    free_head(head);
 	nf_unregister_hooks(http_hooks, ARRAY_SIZE(http_hooks));
 	printk(KERN_ALERT "hook_url_filter_content: rmmod\n");
 }
