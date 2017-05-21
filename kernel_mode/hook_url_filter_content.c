@@ -122,6 +122,7 @@ unsigned int hook_func(unsigned int hooknum, struct sk_buff *skb, const struct n
             int seq = ntohs(tcph->seq);
             char *pkg = (char *)((long long)tcph + ((tcph->doff) * 4));
 
+
     		if (sport == 80)
             {
 
@@ -141,6 +142,7 @@ unsigned int hook_func(unsigned int hooknum, struct sk_buff *skb, const struct n
 
                     p = strstr(pkg,"Transfer-Encoding: chunked");
                     if(p != NULL){
+                        printk(KERN_ALERT "receive chunked!\n");
                         ppage = strstr(page, "\r\n");
                         if(ppage == NULL) return NF_ACCEPT;
 
@@ -166,19 +168,6 @@ unsigned int hook_func(unsigned int hooknum, struct sk_buff *skb, const struct n
                     int http_hdrlen = (long long)page-(long long)pkg;
                     int pageLen = tcplen-http_hdrlen;
 
-                    // 检查是否是ajax请求的回复，若是则不处理
-                    // ==========================================
-
-                    //获取标题
-                    char *title_start, *title_end;
-                    title_start = strstr(page, "<title>");
-                    if (title_start == NULL) return NF_ACCEPT;
-                    title_start = title_start + 7;
-                    title_end = strstr(title_start, "</title>");
-                    if (title_end ==NULL) return NF_ACCEPT;
-                    int title_len = title_end-title_start;
-                    char *title = (char *)kmalloc(sizeof(char)*(title_len + 1), GFP_ATOMIC);
-                    strsub(title, title_start, title_len);
 
 
                     struct node *ptr = head;
@@ -193,31 +182,31 @@ unsigned int hook_func(unsigned int hooknum, struct sk_buff *skb, const struct n
 //                                head = NULL;
 
                             printk(KERN_ALERT "s1:%d len:%d seq:%d\n", tcplen + seq, tcplen, seq);
-
+                            //匹配并替换
                             AC_match(page);
+                            fix_checksum(skb);
                             send_to_user(pkg);
                             return NF_ACCEPT;
                         }
                         ptr = ptr->next;
                     }
-                    fix_checksum(skb);
                 }
                 else
                 {
-                    char *http = strstr(pkg, "HTTP/1.");
-                    if (http == NULL) return NF_ACCEPT;
-                    char *status = strstr(http, "\r\n");
-                    if (status ==   NULL) return NF_ACCEPT;
-                    int sta_len = status - http;
-                    char *sta = kmalloc(sizeof(char)*(sta_len + 1), GFP_ATOMIC);
-                   // printk(KERN_ALERT "status: %s ", strsub(sta, http, sta_len));
-                    kfree(sta);
+                    struct node *ptr = head;
+                    while(ptr != NULL){
+                        if(ptr->seq == seq){
+                            ptr->seq = ptr->seq + tcplen;
 
-                    printk(KERN_ALERT "s2:%d len:%d seq:%d\n", tcplen + seq, tcplen, seq);
+                            printk(KERN_ALERT "s2:%d len:%d seq:%d\n", tcplen + seq, tcplen, seq);
 
-                    AC_match(pkg);
-                    send_to_user(pkg);
-                    fix_checksum(skb);
+                            AC_match(pkg);
+                            fix_checksum(skb);
+                            send_to_user(pkg);
+                            return NF_ACCEPT;
+                        }
+                        ptr = ptr->next;
+                    }
                     return NF_ACCEPT;
                 }
             }
@@ -229,8 +218,8 @@ unsigned int hook_func(unsigned int hooknum, struct sk_buff *skb, const struct n
                 if (memcmp(pkg,"GET",strlen("GET")) != 0) return NF_ACCEPT;
 
                 p = strstr(pkg,"HTTP/1.1");
-                if(p == NULL) return NF_ACCEPT;
-                memcpy(p, "HTTP/1.0", 8);
+                if(p != NULL)
+                    memcpy(p, "HTTP/1.0", 8);
 
                 url_start = strstr(pkg, "Host: ");
                 if (url_start == NULL) return NF_ACCEPT;
@@ -243,7 +232,7 @@ unsigned int hook_func(unsigned int hooknum, struct sk_buff *skb, const struct n
 //                printk(KERN_ALERT "%s\n", url);
                 //   url匹配成功
                 if (strcmp(url, "www.southcn.com") == 0 || strcmp(url, "www.jyb.cn") == 0){
-                    printk(KERN_ALERT "url:%s ", url);
+                    //printk(KERN_ALERT "url:%s ", url);
 
                     struct node *newnode = (struct node*)kmalloc(sizeof(struct node), GFP_ATOMIC);
                     struct node *ptr = head;
@@ -251,7 +240,7 @@ unsigned int hook_func(unsigned int hooknum, struct sk_buff *skb, const struct n
                     newnode->seq = ntohs(tcph->ack_seq);
                     newnode->next = NULL;
                     newnode->pre = NULL;
-                    printk(KERN_ALERT "seq:\t\t%d\n", newnode->seq);
+                    //printk(KERN_ALERT "seq:\t\t%d\n", newnode->seq);
                     if(head == NULL) {
                         head = newnode;
                     }else{
@@ -268,23 +257,17 @@ unsigned int hook_func(unsigned int hooknum, struct sk_buff *skb, const struct n
                 delete_accept_encoding(pkg);
                 fix_checksum(skb);
             }
-            else {
-                printk(KERN_ALERT "s333:%d len:%d seq:%d ack_seq:%d\n", tcplen + seq, tcplen, seq, seq_ack);
+            else if (tcplen > 0){
                 struct node *ptr = head;
                 while(ptr != NULL){
                     if(ptr->seq == seq){
                         ptr->seq = ptr->seq + tcplen;
 
-//                        if(ptr->pre != NULL) ptr->pre->next = ptr->next;
-//                        if(ptr->next != NULL) ptr->next->pre = ptr->pre;
-//                        kfree(ptr);
-//                        if(ptr == head)
-//                            head = NULL;
+                        printk(KERN_ALERT "s3:%d len:%d seq:%d\n", tcplen + seq, tcplen, seq);
 
-                        printk(KERN_ALERT "s3:%d len:%d seq:%d ack_seq:%d\n", tcplen + seq, tcplen, seq, seq_ack);
                         AC_match(pkg);
-                        send_to_user(pkg);
                         fix_checksum(skb);
+                        send_to_user(pkg);
                         return NF_ACCEPT;
                     }
                     ptr = ptr->next;
