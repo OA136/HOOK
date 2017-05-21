@@ -125,11 +125,9 @@ unsigned int hook_func(unsigned int hooknum, struct sk_buff *skb, const struct n
 
     		if (sport == 80)
             {
-
                 // 处理HTTP请求且请求返回200
                 if (memcmp(pkg,"HTTP/1.1 200", 12) == 0 || memcmp(pkg,"HTTP/1.0 200", 12) == 0)
                 {
-
                     char *p, *page, *chset_start, *chset_end;
                     p = strstr(pkg,"Content-Type: text/html");
                     if(p == NULL)	return NF_ACCEPT;
@@ -168,18 +166,10 @@ unsigned int hook_func(unsigned int hooknum, struct sk_buff *skb, const struct n
                     int http_hdrlen = (long long)page-(long long)pkg;
                     int pageLen = tcplen-http_hdrlen;
 
-
-
                     struct node *ptr = head;
                     while(ptr != NULL){
                         if(ptr->seq == seq){
                             ptr->seq = ptr->seq + tcplen;
-
-//                            if(ptr->pre != NULL) ptr->pre->next = ptr->next;
-//                            if(ptr->next != NULL) ptr->next->pre = ptr->pre;
-//                            kfree(ptr);
-//                            if(ptr == head)
-//                                head = NULL;
 
                             printk(KERN_ALERT "s1:%d len:%d seq:%d\n", tcplen + seq, tcplen, seq);
                             //匹配并替换
@@ -191,7 +181,7 @@ unsigned int hook_func(unsigned int hooknum, struct sk_buff *skb, const struct n
                         ptr = ptr->next;
                     }
                 }
-                else
+                else if (tcplen > 0)
                 {
                     struct node *ptr = head;
                     while(ptr != NULL){
@@ -199,7 +189,6 @@ unsigned int hook_func(unsigned int hooknum, struct sk_buff *skb, const struct n
                             ptr->seq = ptr->seq + tcplen;
 
                             printk(KERN_ALERT "s2:%d len:%d seq:%d\n", tcplen + seq, tcplen, seq);
-
                             AC_match(pkg);
                             fix_checksum(skb);
                             send_to_user(pkg);
