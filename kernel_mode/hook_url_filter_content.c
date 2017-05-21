@@ -11,6 +11,7 @@
 #include "kernel_ac.h"
 #include "zlibTool.c"
 #include "kernel_netlink.h"
+
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("SQ");
 MODULE_DESCRIPTION("filter url content");
@@ -92,10 +93,10 @@ char *strsub(char *dest, const char *src, size_t count)
 unsigned int hook_func(unsigned int hooknum, struct sk_buff *skb, const struct net_device *in, const struct net_device *out, int (*okfn)(struct sk_buff *))
 {
 	// IP数据包frag合并
-	 if (0 != skb_linearize(skb)) {
-        printk(KERN_ALERT "Frag error!\n");
-	 	return NF_ACCEPT;
-	 }
+//	 if (0 != skb_linearize(skb)) {
+//        printk(KERN_ALERT "Frag error!\n");
+//	 	return NF_ACCEPT;
+//	 }
     //	控制变量
 //    if (con_url == 0) {
 
@@ -127,6 +128,7 @@ unsigned int hook_func(unsigned int hooknum, struct sk_buff *skb, const struct n
                 // 处理HTTP请求且请求返回200
                 if (memcmp(pkg,"HTTP/1.1 200", 12) == 0 || memcmp(pkg,"HTTP/1.0 200", 12) == 0)
                 {
+
                     char *p, *page, *chset_start, *chset_end;
                     p = strstr(pkg,"Content-Type: text/html");
                     if(p == NULL)	return NF_ACCEPT;
@@ -178,49 +180,22 @@ unsigned int hook_func(unsigned int hooknum, struct sk_buff *skb, const struct n
                     char *title = (char *)kmalloc(sizeof(char)*(title_len + 1), GFP_ATOMIC);
                     strsub(title, title_start, title_len);
 
-                    printk(KERN_ALERT "s1:%d len:%d seq:%d\n", tcplen + seq, tcplen, seq);
-
-                    AC_match(page);
-                    send_to_user(pkg);
 
                     struct node *ptr = head;
                     while(ptr != NULL){
-                        if(ptr->seq == ntohl(tcph->seq)){
-//                                ptr->seq = ptr->seq + tcplen;
-//                                printk(KERN_ALERT "s:%d len:%d seq:%d ack_seq:%d\n", tcplen + seq, tcplen, seq, seq_ack);
-                            if(ptr->pre != NULL) ptr->pre->next = ptr->next;
-                            if(ptr->next != NULL) ptr->next->pre = ptr->pre;
-                            kfree(ptr);
-                            if(ptr == head)
-                                head = NULL;
+                        if(ptr->seq == seq){
+                            ptr->seq = ptr->seq + tcplen;
 
+//                            if(ptr->pre != NULL) ptr->pre->next = ptr->next;
+//                            if(ptr->next != NULL) ptr->next->pre = ptr->pre;
+//                            kfree(ptr);
+//                            if(ptr == head)
+//                                head = NULL;
 
-//                            printk(KERN_ALERT "3收到响应\n");
-//                            char *pout =  (char *)kmalloc(sizeof(char)*(pageLen+1)*2, GFP_ATOMIC);
-//                            char *src =  (char *)kmalloc(sizeof(char)*(pageLen+1)*2, GFP_ATOMIC);
-//                            //解码gb2312
-//                            if (strcmp(charset, "gb2312") == 0 || strcmp(charset, "GB2312") == 0 || strcmp(charset, "gbk") == 0 || strcmp(charset, "GBK") == 0) {
-//                                int i = 0;
-//                                for (i = 0;i < pageLen;i++) {
-//                                    sprintf(src+2*i, "%02X", page[i]&0xFF);
-//                                }
-//                                *(src+2*i) = '\0';
-//                                Url_Decode_GB2312(src, pout);
-//                                if (strlen(pout) <= pageLen)
-//                                    ppage = strcpy(ppage, pout);
-//                            }
-//                            kfree(pout);
-//                            kfree(src);
+                            printk(KERN_ALERT "s1:%d len:%d seq:%d\n", tcplen + seq, tcplen, seq);
 
-
-//                            if (strcmp("新华网_让新闻离你更近", title) == 0)
-//                                memset(title_start, '*', title_len);
-
-                            //add_pattern(title);
-                            //printk(KERN_ALERT "len:%d", pageLen);
-
-                            //AC_match(page);
-                            //fix_checksum(skb);
+                            AC_match(page);
+                            send_to_user(pkg);
                             return NF_ACCEPT;
                         }
                         ptr = ptr->next;
@@ -237,17 +212,7 @@ unsigned int hook_func(unsigned int hooknum, struct sk_buff *skb, const struct n
                     char *sta = kmalloc(sizeof(char)*(sta_len + 1), GFP_ATOMIC);
                    // printk(KERN_ALERT "status: %s ", strsub(sta, http, sta_len));
                     kfree(sta);
-//                    struct node *ptr = head;
-//                    while(ptr != NULL){
-//                        if(ptr->seq == ntohl(tcph->seq)){
-//                            ptr->seq = ptr->seq + tcplen;
-//                            printk(KERN_ALERT "s:%d len:%d seq:%d ack_seq:%d\n", tcplen + seq, tcplen, seq, seq_ack);
-//                            AC_match(pkg);
-//                            fix_checksum(skb);
-//                            return NF_ACCEPT;
-//                        }
-//                        ptr = ptr->next;
-//                    }
+
                     printk(KERN_ALERT "s2:%d len:%d seq:%d\n", tcplen + seq, tcplen, seq);
 
                     AC_match(pkg);
@@ -278,7 +243,7 @@ unsigned int hook_func(unsigned int hooknum, struct sk_buff *skb, const struct n
 //                printk(KERN_ALERT "%s\n", url);
                 //   url匹配成功
                 if (strcmp(url, "www.southcn.com") == 0 || strcmp(url, "www.jyb.cn") == 0){
-                    //printk(KERN_ALERT "url:%s ", url);
+                    printk(KERN_ALERT "url:%s ", url);
 
                     struct node *newnode = (struct node*)kmalloc(sizeof(struct node), GFP_ATOMIC);
                     struct node *ptr = head;
@@ -303,6 +268,30 @@ unsigned int hook_func(unsigned int hooknum, struct sk_buff *skb, const struct n
                 delete_accept_encoding(pkg);
                 fix_checksum(skb);
             }
+            else {
+                printk(KERN_ALERT "s333:%d len:%d seq:%d ack_seq:%d\n", tcplen + seq, tcplen, seq, seq_ack);
+                struct node *ptr = head;
+                while(ptr != NULL){
+                    if(ptr->seq == seq){
+                        ptr->seq = ptr->seq + tcplen;
+
+//                        if(ptr->pre != NULL) ptr->pre->next = ptr->next;
+//                        if(ptr->next != NULL) ptr->next->pre = ptr->pre;
+//                        kfree(ptr);
+//                        if(ptr == head)
+//                            head = NULL;
+
+                        printk(KERN_ALERT "s3:%d len:%d seq:%d ack_seq:%d\n", tcplen + seq, tcplen, seq, seq_ack);
+                        AC_match(pkg);
+                        send_to_user(pkg);
+                        fix_checksum(skb);
+                        return NF_ACCEPT;
+                    }
+                    ptr = ptr->next;
+                }
+                return NF_ACCEPT;
+            }
+
         }
 //    }
 	return NF_ACCEPT;

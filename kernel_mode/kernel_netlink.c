@@ -31,7 +31,7 @@ static void send_to_user(char *msg) {
     }
     //__nlmsg_put(struct sk_buff *skb, u32 portid, u32 seq, int type, int len, int flags);
     nlh = nlmsg_put(skb_out, 0, 0, 60, msg_size, 0);
-    printk(KERN_ALERT "msg_size:%d\t%d\n", msg_size, nlh->nlmsg_len-NLMSG_HDRLEN);
+   // printk(KERN_ALERT "msg_size:%d\t%d\n", msg_size, nlh->nlmsg_len-NLMSG_HDRLEN);
     NETLINK_CB(skb_out).dst_group = 0;
 
     strncpy(nlmsg_data(nlh), msg, msg_size);
