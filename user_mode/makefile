@@ -7,3 +7,8 @@ nlusr.o : nlusr.c
 
 clean:
 	rm nlusr $(objects)
+
+url_start:
+	gcc -o url_start url_start.c -lz -lmysqlclient
+content_start:
+	gcc -o content_start content.c -lz -lmysqlclient

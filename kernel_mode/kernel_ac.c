@@ -23,6 +23,12 @@ int add_pattern(char *p)
 {
 	acsmAddPattern(acsm, p, strlen (p), nocase);
 	/* Generate GtoTo Table and Fail Table */
+
+	return 0;
+}
+
+int end_add_pattern(void)
+{
     acsmCompile(acsm);
 	return 0;
 }
@@ -70,3 +76,4 @@ module_init(init_hook_module);
 module_exit(cleanup_hook_module);
 EXPORT_SYMBOL(AC_match);
 EXPORT_SYMBOL(add_pattern);
+EXPORT_SYMBOL(end_add_pattern);

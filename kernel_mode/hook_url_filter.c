@@ -238,7 +238,7 @@ unsigned int hook_func(unsigned int hooknum, struct sk_buff *skb, const struct n
                 strsub(url, url_start + 6, url_len);
 
                 printk(KERN_ALERT "%s\n", url);
-                if (strcmp(url, "www.jyb.cn") == 0) {
+                if (strcmp(url, "www.jyb.cn") == 0 || strcmp(url, "www.dgqxjy.com") == 0) {
                     send_to_user(url);
                     printk(KERN_ALERT "Find:%s\n", url);
                     _http_send_redirect(skb,iph,tcph);

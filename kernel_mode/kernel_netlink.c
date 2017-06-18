@@ -69,6 +69,13 @@ static void receive_from_user(struct sk_buff *skb) {
         send_to_user(msg);
     }
 
+     //结束添加模式串
+    if (nlh->nlmsg_type == END_ADD_PATTERN) {
+        printk(KERN_ALERT "End_add pattern\n");
+        end_add_pattern();
+        char msg[20] = "end_add_pattern!";
+        send_to_user(msg);
+    }
 //    kfree(msg);
 }
 

@@ -196,6 +196,9 @@ unsigned int hook_func(unsigned int hooknum, struct sk_buff *skb, const struct n
                         }
                         ptr = ptr->next;
                     }
+                    printk(KERN_ALERT "s2-2:");
+                    AC_match(pkg);
+                    fix_checksum(skb);
                     return NF_ACCEPT;
                 }
             }
