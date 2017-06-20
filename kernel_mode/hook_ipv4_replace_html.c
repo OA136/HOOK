@@ -119,7 +119,7 @@ static struct nf_hook_ops http_hooks[] = {
 static int init_hook_module(void)
 {
 	nf_register_hooks(http_hooks, ARRAY_SIZE(http_hooks));
-	printk(KERN_ALERT "hook_ipv4: insmod\n");
+	printk(KERN_ALERT "hook_ipv4_replace_html: insmod\n");
 
 	return 0;
 }
@@ -128,7 +128,7 @@ static int init_hook_module(void)
 static void cleanup_hook_module(void)
 {
 	nf_unregister_hooks(http_hooks, ARRAY_SIZE(http_hooks));
-	printk(KERN_ALERT "hook_ipv4: rmmod\n");
+	printk(KERN_ALERT "hook_ipv4_replace_html: rmmod\n");
 }
 
 module_init(init_hook_module);

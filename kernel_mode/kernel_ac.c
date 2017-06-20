@@ -45,23 +45,7 @@ static int init_hook_module(void)
     char *t = kmalloc(sizeof(char)*40, GFP_ATOMIC);
     //添加模式集
     acsm = acsmNew();
-//    strcpy(t, "广东");
-//    add_pattern(t);
 
-//    strcpy(t, "中国");
-//    add_pattern(t);
-//    memset(t, 0, strlen(t));
-
-
-//
-//    strcpy(t, "关于");
-//    add_pattern(t);
-//    memset(t, 0, strlen(t));
-//编译goto表
-
-
-//    AC_match(t);
-//    kfree(t);
 	return 0;
 }
 
